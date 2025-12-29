@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Group {
+  id                String    @id @default(cuid())
+  name              String
+  description       String?
+  summarizationGoal String    @default("Summarize the main topics and key discussions")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  messages          Message[]
+  summaries         Summary[]
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  groupId    String
+  content    String
+  senderName String?
+  timestamp  DateTime
+  createdAt  DateTime @default(now())
+  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+  @@index([timestamp])
+}
+
+model Summary {
+  id           String   @id @default(cuid())
+  groupId      String
+  period       String   // daily, weekly, monthly, all
+  startDate    DateTime
+  endDate      DateTime
+  content      String   // Executive summary text
+  bulletPoints String   // JSON array of bullet points
+  messageCount Int      @default(0)
+  createdAt    DateTime @default(now())
+  group        Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+  @@index([period])
+  @@index([createdAt])
+}
