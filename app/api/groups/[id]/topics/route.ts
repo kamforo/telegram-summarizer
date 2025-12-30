@@ -101,16 +101,17 @@ export async function POST(
   try {
     const { id: groupId } = await params
 
-    // Get all summaries that don't have topic mentions yet
-    const summaries = await prisma.summary.findMany({
-      where: {
-        groupId,
-        topicMentions: {
-          none: {},
-        },
+    // Get all summaries for this group
+    const allSummaries = await prisma.summary.findMany({
+      where: { groupId },
+      include: {
+        topicMentions: { select: { id: true } },
       },
       orderBy: { createdAt: 'asc' },
     })
+
+    // Filter to only those without topic mentions
+    const summaries = allSummaries.filter((s) => s.topicMentions.length === 0)
 
     if (summaries.length === 0) {
       return NextResponse.json({
