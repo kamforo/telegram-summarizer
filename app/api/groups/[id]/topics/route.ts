@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { extractTopics } from '@/lib/topic-extraction'
 
 export async function GET(
   request: Request,
@@ -87,6 +88,87 @@ export async function GET(
     console.error('Error fetching topics:', error)
     return NextResponse.json(
       { error: 'Failed to fetch topics' },
+      { status: 500 }
+    )
+  }
+}
+
+// POST - Extract topics from existing summaries
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: groupId } = await params
+
+    // Get all summaries that don't have topic mentions yet
+    const summaries = await prisma.summary.findMany({
+      where: {
+        groupId,
+        topicMentions: {
+          none: {},
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    })
+
+    if (summaries.length === 0) {
+      return NextResponse.json({
+        message: 'All summaries already have topics extracted',
+        processed: 0,
+      })
+    }
+
+    let processed = 0
+    const errors: string[] = []
+
+    for (const summary of summaries) {
+      try {
+        const bulletPoints = JSON.parse(summary.bulletPoints)
+        const topics = await extractTopics(summary.content, bulletPoints)
+
+        for (const topic of topics) {
+          // Upsert topic
+          const existingTopic = await prisma.topic.upsert({
+            where: {
+              groupId_name: {
+                groupId,
+                name: topic.name,
+              },
+            },
+            create: {
+              groupId,
+              name: topic.name,
+            },
+            update: {},
+          })
+
+          // Create mention
+          await prisma.topicMention.create({
+            data: {
+              topicId: existingTopic.id,
+              summaryId: summary.id,
+              frequency: topic.frequency,
+            },
+          })
+        }
+
+        processed++
+      } catch (err) {
+        errors.push(`Summary ${summary.id}: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      }
+    }
+
+    return NextResponse.json({
+      message: `Extracted topics from ${processed} summaries`,
+      processed,
+      total: summaries.length,
+      errors: errors.length > 0 ? errors : undefined,
+    })
+  } catch (error) {
+    console.error('Error extracting topics:', error)
+    return NextResponse.json(
+      { error: 'Failed to extract topics' },
       { status: 500 }
     )
   }

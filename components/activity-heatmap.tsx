@@ -105,6 +105,7 @@ export function ActivityHeatmap({ groupId }: ActivityHeatmapProps) {
               <SelectItem value="30">Last 30 days</SelectItem>
               <SelectItem value="90">Last 90 days</SelectItem>
               <SelectItem value="365">Last year</SelectItem>
+              <SelectItem value="9999">All time</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -113,13 +114,13 @@ export function ActivityHeatmap({ groupId }: ActivityHeatmapProps) {
         <div className="overflow-x-auto">
           {/* Hour labels */}
           <div className="flex mb-1 ml-10">
-            {HOURS.filter((_, i) => i % 3 === 0).map((hour, i) => (
+            {HOURS.map((hour, i) => (
               <div
-                key={hour}
-                className="text-xs text-gray-500"
-                style={{ width: '36px', marginLeft: i === 0 ? 0 : '36px' }}
+                key={i}
+                className="w-3 text-xs text-gray-500 text-center"
+                style={{ marginRight: '1px' }}
               >
-                {hour}
+                {i % 6 === 0 ? hour : ''}
               </div>
             ))}
           </div>

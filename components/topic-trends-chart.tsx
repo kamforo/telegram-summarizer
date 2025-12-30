@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, TrendingUp } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Loader2, TrendingUp, RefreshCw } from 'lucide-react'
 import {
   LineChart,
   Line,
@@ -48,29 +49,47 @@ interface TopicTrendsChartProps {
 export function TopicTrendsChart({ groupId }: TopicTrendsChartProps) {
   const [data, setData] = useState<TopicsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [extracting, setExtracting] = useState(false)
   const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set())
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true)
-      try {
-        const response = await fetch(`/api/groups/${groupId}/topics`)
-        if (response.ok) {
-          const result = await response.json()
-          setData(result)
-          // Select top 5 topics by default
-          const topTopics = result.topics.slice(0, 5).map((t: TopicStat) => t.name)
-          setSelectedTopics(new Set(topTopics))
-        }
-      } catch (error) {
-        console.error('Failed to fetch topics:', error)
-      } finally {
-        setLoading(false)
+  const fetchData = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/groups/${groupId}/topics`)
+      if (response.ok) {
+        const result = await response.json()
+        setData(result)
+        // Select top 5 topics by default
+        const topTopics = result.topics.slice(0, 5).map((t: TopicStat) => t.name)
+        setSelectedTopics(new Set(topTopics))
       }
+    } catch (error) {
+      console.error('Failed to fetch topics:', error)
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchData()
   }, [groupId])
+
+  const handleExtractTopics = async () => {
+    setExtracting(true)
+    try {
+      const response = await fetch(`/api/groups/${groupId}/topics`, {
+        method: 'POST',
+      })
+      if (response.ok) {
+        // Refresh data after extraction
+        await fetchData()
+      }
+    } catch (error) {
+      console.error('Failed to extract topics:', error)
+    } finally {
+      setExtracting(false)
+    }
+  }
 
   const toggleTopic = (topicName: string) => {
     const newSelected = new Set(selectedTopics)
@@ -98,9 +117,22 @@ export function TopicTrendsChart({ groupId }: TopicTrendsChartProps) {
         <CardContent className="flex flex-col items-center justify-center py-12">
           <TrendingUp className="h-12 w-12 text-gray-400 mb-4" />
           <p className="text-gray-500">No topic data yet</p>
-          <p className="text-sm text-gray-400 mt-1">
-            Generate summaries to start tracking topics
+          <p className="text-sm text-gray-400 mt-1 mb-4">
+            Extract topics from existing summaries or generate new ones
           </p>
+          <Button onClick={handleExtractTopics} disabled={extracting}>
+            {extracting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Extracting...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Extract Topics from Summaries
+              </>
+            )}
+          </Button>
         </CardContent>
       </Card>
     )
@@ -111,8 +143,24 @@ export function TopicTrendsChart({ groupId }: TopicTrendsChartProps) {
       {/* Topic Stats */}
       <Card>
         <CardHeader>
-          <CardTitle>Top Topics</CardTitle>
-          <CardDescription>Click to toggle topics in the chart</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Top Topics</CardTitle>
+              <CardDescription>Click to toggle topics in the chart</CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExtractTopics}
+              disabled={extracting}
+            >
+              {extracting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
