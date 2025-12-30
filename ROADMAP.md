@@ -18,9 +18,9 @@
 - [x] **Topic Trends** - Track topic popularity over time with charts
 
 ### Phase 2: AI Enhancements
-- [ ] **Custom Prompts per Group** - Fine-tune summarization per group
-- [ ] **Follow-up Suggestions** - AI suggests questions after summaries
-- [ ] **Post Suggestions** - AI suggests questions and content to share
+- [x] **Custom Prompts per Group** - Fine-tune summarization per group
+- [x] **Follow-up Suggestions** - AI suggests questions after summaries
+- [x] **Post Suggestions** - AI suggests questions and content to share
 
 ### Phase 3: Smart Features
 - [ ] **Conversation Threading** - Detect and summarize discussion threads

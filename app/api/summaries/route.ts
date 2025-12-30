@@ -156,7 +156,8 @@ export async function POST(request: Request) {
         senderName: m.senderName,
         timestamp: m.timestamp,
       })),
-      group.summarizationGoal
+      group.summarizationGoal,
+      group.customPrompt || undefined
     )
 
     // Save the summary
@@ -168,6 +169,7 @@ export async function POST(request: Request) {
         endDate,
         content: result.summary,
         bulletPoints: JSON.stringify(result.bulletPoints),
+        followUpSuggestions: JSON.stringify(result.followUpSuggestions),
         messageCount: messages.length,
       },
     })
@@ -208,6 +210,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ...summary,
       bulletPoints: result.bulletPoints,
+      followUpSuggestions: result.followUpSuggestions,
     })
   } catch (error) {
     console.error('Error generating summary:', error)

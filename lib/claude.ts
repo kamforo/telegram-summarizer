@@ -7,11 +7,13 @@ const anthropic = new Anthropic({
 export interface SummaryResult {
   summary: string
   bulletPoints: string[]
+  followUpSuggestions: string[]
 }
 
 export async function generateSummary(
   messages: Array<{ content: string; senderName: string | null; timestamp: Date }>,
-  summarizationGoal: string
+  summarizationGoal: string,
+  customPrompt?: string
 ): Promise<SummaryResult> {
   if (messages.length === 0) {
     throw new Error('No messages to summarize')
@@ -26,16 +28,19 @@ export async function generateSummary(
     })
     .join('\n')
 
-  const prompt = `You are an expert at analyzing and summarizing group chat conversations. Your task is to analyze the following Telegram group messages and create a comprehensive, well-formatted summary.
+  // Use custom prompt if provided, otherwise use default
+  const baseInstructions = customPrompt
+    ? `${customPrompt}\n\n**Summarization Goal:** ${summarizationGoal}`
+    : `You are an expert at analyzing and summarizing group chat conversations. Your task is to analyze the following Telegram group messages and create a comprehensive, well-formatted summary.\n\n**Summarization Goal:** ${summarizationGoal}`
 
-**Summarization Goal:** ${summarizationGoal}
+  const prompt = `${baseInstructions}
 
 **Messages to analyze:**
 ${formattedMessages}
 
 ---
 
-Please provide a well-structured summary in the following format:
+Please provide a well-structured response in the following format:
 
 SUMMARY:
 Write 2-3 paragraphs that capture the main themes and discussions. Use markdown formatting:
@@ -51,15 +56,20 @@ Create 5-10 key bullet points. For each point:
 - Include relevant quotes or data when available
 - Format: **Topic**: Detail about this topic
 
-Example bullet format:
-- **Price Discussion**: Users discussed BTC reaching $50k, with @john predicting further upside
-- **Technical Analysis**: Multiple mentions of support levels at $48k
+FOLLOW_UP_SUGGESTIONS:
+Generate 3-5 insightful follow-up questions that the reader might want to ask about this discussion. Focus on:
+- Clarifying ambiguous points mentioned in the messages
+- Exploring decisions or opinions that were discussed
+- Understanding context that wasn't fully explained
+- Digging deeper into interesting topics
+
+Format as a simple numbered list of questions.
 
 Focus specifically on information relevant to the summarization goal. Be specific and reference actual content from the messages.`
 
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 2500,
+    max_tokens: 3000,
     messages: [
       {
         role: 'user',
@@ -78,10 +88,12 @@ Focus specifically on information relevant to the summarization goal. Be specifi
 
   // Parse the response
   const summaryMatch = responseText.match(/SUMMARY:\s*([\s\S]*?)(?=BULLET_POINTS:|$)/i)
-  const bulletMatch = responseText.match(/BULLET_POINTS:\s*([\s\S]*?)$/i)
+  const bulletMatch = responseText.match(/BULLET_POINTS:\s*([\s\S]*?)(?=FOLLOW_UP_SUGGESTIONS:|$)/i)
+  const followUpMatch = responseText.match(/FOLLOW_UP_SUGGESTIONS:\s*([\s\S]*?)$/i)
 
   const summary = summaryMatch ? summaryMatch[1].trim() : responseText
   const bulletText = bulletMatch ? bulletMatch[1].trim() : ''
+  const followUpText = followUpMatch ? followUpMatch[1].trim() : ''
 
   // Parse bullet points - preserve markdown formatting
   const bulletPoints = bulletText
@@ -89,8 +101,15 @@ Focus specifically on information relevant to the summarization goal. Be specifi
     .map((line) => line.replace(/^[-•*]\s*/, '').trim())
     .filter((line) => line.length > 0)
 
+  // Parse follow-up suggestions
+  const followUpSuggestions = followUpText
+    .split('\n')
+    .map((line) => line.replace(/^\d+[\.\)]\s*/, '').trim())
+    .filter((line) => line.length > 0 && line.endsWith('?'))
+
   return {
     summary,
     bulletPoints: bulletPoints.length > 0 ? bulletPoints : ['No specific bullet points extracted'],
+    followUpSuggestions: followUpSuggestions.length > 0 ? followUpSuggestions : [],
   }
 }

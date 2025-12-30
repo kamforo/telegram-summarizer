@@ -12,15 +12,17 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ArrowLeft, Upload, FileText, MessageSquare, Sparkles, Save, Send, Loader2, ChevronDown, ChevronUp, BarChart3, TrendingUp } from 'lucide-react'
+import { ArrowLeft, Upload, FileText, MessageSquare, Sparkles, Save, Send, Loader2, ChevronDown, ChevronUp, BarChart3, TrendingUp, Lightbulb } from 'lucide-react'
 import { ActivityHeatmap } from '@/components/activity-heatmap'
 import { TopicTrendsChart } from '@/components/topic-trends-chart'
+import { PostSuggestions } from '@/components/post-suggestions'
 
 interface Group {
   id: string
   name: string
   description: string | null
   summarizationGoal: string
+  customPrompt: string | null
   createdAt: string
   _count: {
     messages: number
@@ -35,6 +37,7 @@ interface Summary {
   endDate: string
   content: string
   bulletPoints: string
+  followUpSuggestions: string | null
   messageCount: number
   createdAt: string
 }
@@ -56,6 +59,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
     name: '',
     description: '',
     summarizationGoal: '',
+    customPrompt: '',
   })
 
   // Q&A state
@@ -83,6 +87,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
           name: groupData.name,
           description: groupData.description || '',
           summarizationGoal: groupData.summarizationGoal,
+          customPrompt: groupData.customPrompt || '',
         })
 
         if (summariesRes.ok) {
@@ -234,6 +239,10 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
               <TrendingUp className="h-3 w-3" />
               Topics
             </TabsTrigger>
+            <TabsTrigger value="post-ideas" className="flex items-center gap-1">
+              <Lightbulb className="h-3 w-3" />
+              Post Ideas
+            </TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -320,6 +329,35 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                             </ul>
                           </div>
 
+                          {/* Follow-up Suggestions */}
+                          {summary.followUpSuggestions && (() => {
+                            const suggestions = JSON.parse(summary.followUpSuggestions)
+                            if (suggestions.length === 0) return null
+                            return (
+                              <div>
+                                <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                                  Suggested Questions
+                                </h4>
+                                <div className="flex flex-wrap gap-2">
+                                  {suggestions.map((suggestion: string, i: number) => (
+                                    <Button
+                                      key={i}
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-left h-auto py-2 px-3"
+                                      onClick={() => {
+                                        setSelectedSummaryForQA(summary.id)
+                                        setQuestion(suggestion)
+                                      }}
+                                    >
+                                      {suggestion}
+                                    </Button>
+                                  ))}
+                                </div>
+                              </div>
+                            )
+                          })()}
+
                           {/* Q&A Section */}
                           <div className="border-t pt-4">
                             <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
@@ -399,6 +437,10 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
             <TopicTrendsChart groupId={group.id} />
           </TabsContent>
 
+          <TabsContent value="post-ideas" className="mt-6">
+            <PostSuggestions groupId={group.id} />
+          </TabsContent>
+
           <TabsContent value="settings" className="mt-6">
             <Card>
               <CardHeader>
@@ -436,6 +478,20 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                   />
                   <p className="text-sm text-gray-500">
                     Define what the AI should focus on when creating summaries
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="customPrompt">Custom Prompt (Optional)</Label>
+                  <Textarea
+                    id="customPrompt"
+                    value={editForm.customPrompt}
+                    onChange={(e) => setEditForm({ ...editForm, customPrompt: e.target.value })}
+                    rows={5}
+                    placeholder="You are an expert at analyzing crypto trading discussions. Focus on identifying trading signals, price predictions, and market sentiment..."
+                  />
+                  <p className="text-sm text-gray-500">
+                    Override the default AI instructions for this group. Leave empty to use the default prompt.
                   </p>
                 </div>
 
