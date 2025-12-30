@@ -14,8 +14,8 @@
 ## Planned Features
 
 ### Phase 1: Analytics & Insights
-- [ ] **Activity Heatmap** - Visualize group activity by hour/day
-- [ ] **Topic Trends** - Track topic popularity over time with charts
+- [x] **Activity Heatmap** - Visualize group activity by hour/day
+- [x] **Topic Trends** - Track topic popularity over time with charts
 
 ### Phase 2: AI Enhancements
 - [ ] **Custom Prompts per Group** - Fine-tune summarization per group

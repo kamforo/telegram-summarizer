@@ -12,7 +12,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ArrowLeft, Upload, FileText, MessageSquare, Sparkles, Save, Send, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
+import { ArrowLeft, Upload, FileText, MessageSquare, Sparkles, Save, Send, Loader2, ChevronDown, ChevronUp, BarChart3, TrendingUp } from 'lucide-react'
+import { ActivityHeatmap } from '@/components/activity-heatmap'
+import { TopicTrendsChart } from '@/components/topic-trends-chart'
 
 interface Group {
   id: string
@@ -224,6 +226,14 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
         <Tabs defaultValue="summaries">
           <TabsList>
             <TabsTrigger value="summaries">Summaries ({group._count.summaries})</TabsTrigger>
+            <TabsTrigger value="activity" className="flex items-center gap-1">
+              <BarChart3 className="h-3 w-3" />
+              Activity
+            </TabsTrigger>
+            <TabsTrigger value="topics" className="flex items-center gap-1">
+              <TrendingUp className="h-3 w-3" />
+              Topics
+            </TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -379,6 +389,14 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                 })}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="activity" className="mt-6">
+            <ActivityHeatmap groupId={group.id} />
+          </TabsContent>
+
+          <TabsContent value="topics" className="mt-6">
+            <TopicTrendsChart groupId={group.id} />
           </TabsContent>
 
           <TabsContent value="settings" className="mt-6">

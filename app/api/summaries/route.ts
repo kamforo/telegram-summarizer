@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { generateSummary } from '@/lib/claude'
+import { extractTopics } from '@/lib/topic-extraction'
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, subWeeks, subMonths } from 'date-fns'
 
 // GET /api/summaries - List summaries for a group
@@ -170,6 +171,39 @@ export async function POST(request: Request) {
         messageCount: messages.length,
       },
     })
+
+    // Extract and save topics (async, don't block response)
+    extractTopics(result.summary, result.bulletPoints)
+      .then(async (topics) => {
+        for (const topic of topics) {
+          // Upsert topic
+          const existingTopic = await prisma.topic.upsert({
+            where: {
+              groupId_name: {
+                groupId,
+                name: topic.name,
+              },
+            },
+            create: {
+              groupId,
+              name: topic.name,
+            },
+            update: {},
+          })
+
+          // Create mention
+          await prisma.topicMention.create({
+            data: {
+              topicId: existingTopic.id,
+              summaryId: summary.id,
+              frequency: topic.frequency,
+            },
+          })
+        }
+      })
+      .catch((error) => {
+        console.error('Error extracting topics:', error)
+      })
 
     return NextResponse.json({
       ...summary,

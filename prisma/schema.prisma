@@ -16,6 +16,7 @@ model Group {
   updatedAt         DateTime  @updatedAt
   messages          Message[]
   summaries         Summary[]
+  topics            Topic[]
 }
 
 model Message {
@@ -42,8 +43,35 @@ model Summary {
   messageCount Int      @default(0)
   createdAt    DateTime @default(now())
   group        Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  topicMentions TopicMention[]
 
   @@index([groupId])
   @@index([period])
   @@index([createdAt])
+}
+
+model Topic {
+  id        String         @id @default(cuid())
+  groupId   String
+  name      String
+  createdAt DateTime       @default(now())
+  group     Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  mentions  TopicMention[]
+
+  @@unique([groupId, name])
+  @@index([groupId])
+}
+
+model TopicMention {
+  id        String   @id @default(cuid())
+  topicId   String
+  summaryId String
+  frequency Int      @default(1)
+  createdAt DateTime @default(now())
+  topic     Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  summary   Summary  @relation(fields: [summaryId], references: [id], onDelete: Cascade)
+
+  @@unique([topicId, summaryId])
+  @@index([topicId])
+  @@index([summaryId])
 }
