@@ -23,12 +23,18 @@
 - [x] **Post Suggestions** - AI suggests questions and content to share
 
 ### Phase 3: Smart Features
-- [ ] **Conversation Threading** - Detect and summarize discussion threads
-- [ ] **Scheduled Summaries** - Auto-generate summaries via cron
+- [x] **Conversation Threading** - Detect and summarize discussion threads
+- [x] **Scheduled Summaries** - Auto-generate summaries via cron
 
 ### Phase 4: Telegram Integration
 - [ ] **MTProto Integration** - Connect directly to Telegram account
 - [ ] **Real-time Sync** - Auto-fetch new messages from groups
+
+### Phase 5: Deployment
+- [ ] **DigitalOcean App Platform** - Deploy to production
+- [ ] **PostgreSQL Migration** - Switch from SQLite to managed Postgres
+- [ ] **Environment Setup** - Production env vars and secrets
+- [ ] **Domain Setup** - Custom domain (optional)
 
 ---
 

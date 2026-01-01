@@ -4,7 +4,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Group {
@@ -13,12 +14,20 @@ model Group {
   description       String?
   summarizationGoal String    @default("Summarize the main topics and key discussions")
   customPrompt      String?   // Custom prompt template for summarization
+  // Schedule settings
+  scheduleEnabled   Boolean   @default(false)
+  scheduleCron      String?   // Cron expression, e.g., "0 9 * * 1" (Monday 9am)
+  scheduleTimezone  String    @default("UTC")
+  schedulePeriod    String    @default("daily") // daily, weekly, monthly
+  lastScheduledRun  DateTime?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   messages          Message[]
   summaries         Summary[]
   topics            Topic[]
   postSuggestions   PostSuggestion[]
+  threads           Thread[]
+  scheduleLogs      ScheduleLog[]
 }
 
 model Message {
@@ -92,4 +101,44 @@ model PostSuggestion {
 
   @@index([groupId])
   @@index([type])
+}
+
+model Thread {
+  id        String          @id @default(cuid())
+  groupId   String
+  title     String
+  summary   String?
+  startTime DateTime
+  endTime   DateTime
+  createdAt DateTime        @default(now())
+  group     Group           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  messages  ThreadMessage[]
+
+  @@index([groupId])
+  @@index([startTime])
+}
+
+model ThreadMessage {
+  id        String   @id @default(cuid())
+  threadId  String
+  messageId String
+  position  Int      // Order within thread
+  createdAt DateTime @default(now())
+  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@unique([threadId, messageId])
+  @@index([threadId])
+}
+
+model ScheduleLog {
+  id        String   @id @default(cuid())
+  groupId   String
+  status    String   // "success", "error", "no_messages"
+  message   String?
+  summaryId String?
+  createdAt DateTime @default(now())
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+  @@index([createdAt])
 }

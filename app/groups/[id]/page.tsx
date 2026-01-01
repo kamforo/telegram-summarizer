@@ -12,10 +12,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ArrowLeft, Upload, FileText, MessageSquare, Sparkles, Save, Send, Loader2, ChevronDown, ChevronUp, BarChart3, TrendingUp, Lightbulb } from 'lucide-react'
+import { ArrowLeft, Upload, FileText, MessageSquare, Sparkles, Save, Send, Loader2, ChevronDown, ChevronUp, BarChart3, TrendingUp, Lightbulb, GitBranch, Clock } from 'lucide-react'
 import { ActivityHeatmap } from '@/components/activity-heatmap'
 import { TopicTrendsChart } from '@/components/topic-trends-chart'
 import { PostSuggestions } from '@/components/post-suggestions'
+import { ThreadView } from '@/components/thread-view'
+import { ScheduleConfig } from '@/components/schedule-config'
 
 interface Group {
   id: string
@@ -243,6 +245,10 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
               <Lightbulb className="h-3 w-3" />
               Post Ideas
             </TabsTrigger>
+            <TabsTrigger value="threads" className="flex items-center gap-1">
+              <GitBranch className="h-3 w-3" />
+              Threads
+            </TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -441,7 +447,11 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
             <PostSuggestions groupId={group.id} />
           </TabsContent>
 
-          <TabsContent value="settings" className="mt-6">
+          <TabsContent value="threads" className="mt-6">
+            <ThreadView groupId={group.id} />
+          </TabsContent>
+
+          <TabsContent value="settings" className="mt-6 space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Group Settings</CardTitle>
@@ -501,6 +511,9 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Scheduled Summaries */}
+            <ScheduleConfig groupId={group.id} />
           </TabsContent>
         </Tabs>
       </div>
