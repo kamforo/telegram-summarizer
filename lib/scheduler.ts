@@ -145,8 +145,31 @@ export class SummaryScheduler {
         },
       })
 
-      // Extract topics
-      await extractTopics(summary.id, result.summary, result.bulletPoints)
+      // Extract topics and save to database
+      const topics = await extractTopics(result.summary, result.bulletPoints)
+      for (const topic of topics) {
+        const existingTopic = await prisma.topic.upsert({
+          where: {
+            groupId_name: {
+              groupId,
+              name: topic.name,
+            },
+          },
+          create: {
+            groupId,
+            name: topic.name,
+          },
+          update: {},
+        })
+
+        await prisma.topicMention.create({
+          data: {
+            topicId: existingTopic.id,
+            summaryId: summary.id,
+            frequency: topic.frequency,
+          },
+        })
+      }
 
       // Update last scheduled run
       await prisma.group.update({
