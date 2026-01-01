@@ -2,25 +2,25 @@ import { PrismaClient } from './generated/prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
 
-function createPrismaClient() {
-  if (process.env.DATABASE_URL?.startsWith('postgres')) {
-    // PostgreSQL for production
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL })
-    const adapter = new PrismaPg(pool)
-    return new PrismaClient({ adapter })
-  } else {
-    // SQLite for development - use dynamic import
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { PrismaLibSql } = require('@prisma/adapter-libsql')
-    const adapter = new PrismaLibSql({ url: 'file:./prisma/dev.db' })
-    return new PrismaClient({ adapter })
-  }
-}
-
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient()
+function createPrismaClient(): PrismaClient {
+  const dbUrl = process.env.DATABASE_URL || ''
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+  // Always use PostgreSQL adapter since schema is set to postgresql
+  const pool = new Pool({ connectionString: dbUrl || 'postgresql://localhost:5432/telegram_summarizer' })
+  const adapter = new PrismaPg(pool)
+  return new PrismaClient({ adapter })
+}
+
+// Lazy initialization - only create client when first accessed
+export const prisma = new Proxy({} as PrismaClient, {
+  get(target, prop) {
+    if (!globalForPrisma.prisma) {
+      globalForPrisma.prisma = createPrismaClient()
+    }
+    return Reflect.get(globalForPrisma.prisma, prop)
+  },
+})
