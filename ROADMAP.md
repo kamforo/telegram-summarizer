@@ -31,9 +31,9 @@
 - [ ] **Real-time Sync** - Auto-fetch new messages from groups
 
 ### Phase 5: Deployment
-- [ ] **DigitalOcean App Platform** - Deploy to production
-- [ ] **PostgreSQL Migration** - Switch from SQLite to managed Postgres
-- [ ] **Environment Setup** - Production env vars and secrets
+- [x] **DigitalOcean App Platform** - Deploy to production
+- [x] **PostgreSQL Migration** - Switch from SQLite to managed Postgres
+- [x] **Environment Setup** - Production env vars and secrets
 - [ ] **Domain Setup** - Custom domain (optional)
 
 ---

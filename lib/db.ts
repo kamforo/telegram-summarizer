@@ -10,7 +10,11 @@ function createPrismaClient(): PrismaClient {
   const dbUrl = process.env.DATABASE_URL || ''
 
   // Always use PostgreSQL adapter since schema is set to postgresql
-  const pool = new Pool({ connectionString: dbUrl || 'postgresql://localhost:5432/telegram_summarizer' })
+  // Configure SSL for DO managed databases
+  const pool = new Pool({
+    connectionString: dbUrl || 'postgresql://localhost:5432/telegram_summarizer',
+    ssl: dbUrl.includes('ondigitalocean.com') ? { rejectUnauthorized: false } : undefined
+  })
   const adapter = new PrismaPg(pool)
   return new PrismaClient({ adapter })
 }
