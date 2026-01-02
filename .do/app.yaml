@@ -25,4 +25,4 @@ services:
 databases:
   - name: db
     engine: PG
-    production: false
+    production: true
