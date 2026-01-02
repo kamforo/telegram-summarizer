@@ -7,10 +7,14 @@ const globalForPrisma = globalThis as unknown as {
 }
 
 function createPrismaClient(): PrismaClient {
-  const dbUrl = process.env.DATABASE_URL || ''
+  let dbUrl = process.env.DATABASE_URL || ''
+
+  // For DO managed databases, ensure proper SSL mode
+  if (dbUrl.includes('ondigitalocean.com') && !dbUrl.includes('sslmode=')) {
+    dbUrl = dbUrl.includes('?') ? `${dbUrl}&sslmode=no-verify` : `${dbUrl}?sslmode=no-verify`
+  }
 
   // Always use PostgreSQL adapter since schema is set to postgresql
-  // Configure SSL for DO managed databases
   const pool = new Pool({
     connectionString: dbUrl || 'postgresql://localhost:5432/telegram_summarizer',
     ssl: dbUrl.includes('ondigitalocean.com') ? { rejectUnauthorized: false } : undefined
